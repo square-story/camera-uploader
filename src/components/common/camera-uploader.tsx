@@ -136,7 +136,7 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
         try {
             // Check if getUserMedia is supported
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Camera access is not supported in this browser.');
+                toast.error('Camera access is not supported in this browser.');
                 return;
             }
 
@@ -169,11 +169,11 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
             // Provide more specific error messages
             if (error instanceof Error) {
                 if (error.name === 'NotAllowedError') {
-                    alert('Camera access denied. Please allow camera permissions and try again.');
+                    toast.error('Camera access denied. Please allow camera permissions and try again.');
                 } else if (error.name === 'NotFoundError') {
-                    alert('No camera found on this device.');
+                    toast.error('No camera found on this device.');
                 } else if (error.name === 'NotSupportedError') {
-                    alert('Camera is not supported on this device.');
+                    toast.error('Camera is not supported on this device.');
                 } else if (error.name === 'OverconstrainedError') {
                     // Try again with less restrictive constraints
                     try {
@@ -191,13 +191,13 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                             }
                         }, 100);
                     } catch (_fallbackError) {
-                        alert('Unable to access camera with any settings.');
+                        toast.error('Unable to access camera with any settings.');
                     }
                 } else {
-                    alert(`Camera error: ${error.message}`);
+                    toast.error(`Camera error: ${error.message}`);
                 }
             } else {
-                alert('Unable to access camera. Please check permissions.');
+                toast.error('Unable to access camera. Please check permissions.');
             }
         }
     }, []);
@@ -218,13 +218,13 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
 
             if (!context) {
                 console.error('Unable to get canvas context');
-                alert('Unable to capture photo. Canvas not supported.');
+                toast.error('Unable to capture photo. Canvas not supported.');
                 return;
             }
 
             // Check if video is playing and has dimensions
             if (video.videoWidth === 0 || video.videoHeight === 0) {
-                alert('Camera not ready yet. Please wait a moment and try again.');
+                toast.error('Camera not ready yet. Please wait a moment and try again.');
                 return;
             }
 
@@ -245,7 +245,7 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                     handleFiles([file]);
                     stopCamera();
                 } else {
-                    alert('Failed to capture photo. Please try again.');
+                    toast.error('Failed to capture photo. Please try again.');
                 }
             }, 'image/jpeg', 0.9);
         }
