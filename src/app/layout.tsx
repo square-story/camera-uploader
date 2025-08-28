@@ -35,11 +35,11 @@ export default function RootLayout({
         <main>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
+            <Analytics />
             <FloatingModeSwitch />
           </ThemeProvider>
         </main>
         <Toaster />
-        <Analytics />
       </body>
     </html>
   );
