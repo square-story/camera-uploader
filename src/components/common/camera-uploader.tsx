@@ -1,10 +1,7 @@
-"use client"
-
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Upload, X, Check, ImageDown } from 'lucide-react';
+import { Camera, Upload, X, Image, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
 
 // Type definitions
 interface FileObject {
@@ -135,23 +132,37 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
     // Camera handlers
     const startCamera = useCallback(async (): Promise<void> => {
         try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
+            // Check if getUserMedia is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Camera access is not supported in this browser.');
+                return;
+            }
+
+            setShowCamera(true); // Show modal first
+
+            const constraints: MediaStreamConstraints = {
                 video: {
-                    facingMode: 'environment',
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
+                    facingMode: { ideal: 'environment' }, // Try back camera first, fallback to any
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
                 },
                 audio: false
-            });
+            };
 
+            const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
             setStream(mediaStream);
-            setShowCamera(true);
 
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-            }
+            // Wait a bit for the video element to be ready
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                    videoRef.current.play().catch(console.error);
+                }
+            }, 100);
+
         } catch (error) {
             console.error('Error accessing camera:', error);
+            setShowCamera(false); // Hide modal if camera fails
 
             // Provide more specific error messages
             if (error instanceof Error) {
@@ -159,6 +170,27 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                     alert('Camera access denied. Please allow camera permissions and try again.');
                 } else if (error.name === 'NotFoundError') {
                     alert('No camera found on this device.');
+                } else if (error.name === 'NotSupportedError') {
+                    alert('Camera is not supported on this device.');
+                } else if (error.name === 'OverconstrainedError') {
+                    // Try again with less restrictive constraints
+                    try {
+                        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: false
+                        });
+                        setStream(fallbackStream);
+                        setShowCamera(true);
+
+                        setTimeout(() => {
+                            if (videoRef.current) {
+                                videoRef.current.srcObject = fallbackStream;
+                                videoRef.current.play().catch(console.error);
+                            }
+                        }, 100);
+                    } catch (fallbackError) {
+                        alert('Unable to access camera with any settings.');
+                    }
                 } else {
                     alert(`Camera error: ${error.message}`);
                 }
@@ -184,23 +216,36 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
 
             if (!context) {
                 console.error('Unable to get canvas context');
+                alert('Unable to capture photo. Canvas not supported.');
                 return;
             }
 
+            // Check if video is playing and has dimensions
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                alert('Camera not ready yet. Please wait a moment and try again.');
+                return;
+            }
+
+            // Set canvas dimensions to match video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
 
+            // Draw the current video frame to canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to blob and create file
             canvas.toBlob((blob) => {
                 if (blob) {
-                    const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const file = new File([blob], `camera-capture-${timestamp}.jpg`, {
                         type: 'image/jpeg'
                     });
                     handleFiles([file]);
+                    stopCamera();
+                } else {
+                    alert('Failed to capture photo. Please try again.');
                 }
-            }, 'image/jpeg', 0.8);
-
-            stopCamera();
+            }, 'image/jpeg', 0.9);
         }
     }, [handleFiles, stopCamera]);
 
@@ -283,25 +328,47 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                                     </Button>
                                 </div>
 
-                                <div className="relative">
+                                <div className="relative bg-black rounded-lg overflow-hidden">
                                     <video
                                         ref={videoRef}
                                         autoPlay
                                         playsInline
                                         muted
-                                        className="w-full rounded-lg"
-                                        style={{ maxHeight: '300px' }}
+                                        className="w-full h-64 object-cover"
+                                        onLoadedMetadata={() => {
+                                            // Ensure video starts playing
+                                            if (videoRef.current) {
+                                                videoRef.current.play().catch(console.error);
+                                            }
+                                        }}
                                     />
+                                    {/* Loading indicator */}
+                                    {!stream && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                                            <div className="text-white text-sm">Starting camera...</div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="flex justify-center">
+                                <div className="flex justify-center gap-2">
                                     <Button
                                         onClick={capturePhoto}
                                         size="lg"
                                         type="button"
+                                        disabled={!stream}
+                                        className="flex-1"
                                     >
                                         <Camera className="h-5 w-5 mr-2" />
                                         Capture Photo
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={stopCamera}
+                                        size="lg"
+                                        type="button"
+                                    >
+                                        Cancel
                                     </Button>
                                 </div>
                             </div>
@@ -402,16 +469,14 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                                     {/* File Preview */}
                                     <div className="flex-shrink-0">
                                         {fileObj.type.startsWith('image/') ? (
-                                            <Image
+                                            <img
                                                 src={fileObj.preview}
                                                 alt={fileObj.name}
                                                 className="w-12 h-12 object-cover rounded"
-                                                width={48}
-                                                height={48}
                                             />
                                         ) : (
                                             <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                                                <ImageDown className="h-6 w-6 text-muted-foreground" />
+                                                <Image className="h-6 w-6 text-muted-foreground" />
                                             </div>
                                         )}
                                     </div>
