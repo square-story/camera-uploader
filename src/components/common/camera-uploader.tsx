@@ -3,6 +3,7 @@ import { Camera, Upload, X, Check, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 // Type definitions
 interface FileObject {
@@ -284,11 +285,11 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
             } else {
                 // Default behavior - just log the files
                 console.log('Files to upload:', files.map(f => f.file));
-                alert(`Ready to upload ${files.length} file(s)`);
+                toast.success(`Ready to upload ${files.length} file(s)`);
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
+            toast.error('Upload failed. Please try again.');
         } finally {
             setIsUploading(false);
         }
@@ -459,7 +460,7 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                 <Card>
                     <CardContent className="p-6">
                         <h3 className="text-lg font-semibold mb-4">
-                            Uploaded Files ({files.length})
+                            Selected Files ({files.length})
                         </h3>
                         <div className="space-y-3">
                             {files.map((fileObj) => (

@@ -1,5 +1,6 @@
 "use client"
 import CameraUploadComponent from "@/components/common/camera-uploader";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface FileObject {
@@ -12,12 +13,13 @@ interface FileObject {
 }
 
 const Home = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const handleFilesChange = (files: FileObject[]) => {
     console.log('Files updated:', files);
   };
 
   const handleUpload = async (files: FileObject[]) => {
-    // Your upload logic here
+    setIsLoading(true);
     const formData = new FormData();
     files.forEach(fileObj => {
       formData.append('files', fileObj.file);
@@ -33,6 +35,7 @@ const Home = () => {
       success: "Files uploaded successfully!",
       error: "Failed to upload files.",
     });
+    setIsLoading(false);
   };
 
   return (
