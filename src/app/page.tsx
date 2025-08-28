@@ -1,5 +1,6 @@
 "use client"
 import CameraUploadComponent from "@/components/common/camera-uploader";
+import { GithubButton } from "@/components/ui/github-button";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -39,7 +40,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center flex-col justify-center p-4">
       <CameraUploadComponent
         onFilesChange={handleFilesChange}
         onUpload={handleUpload}
@@ -47,6 +48,9 @@ const Home = () => {
         acceptedTypes={['image/*']} // Only images
         maxFiles={5}
       />
+      <div className="flex justify-end items-center">
+        <GithubButton label="Checkout on GitHub" repoUrl="https://github.com/square-story/camera-uploader" />
+      </div>
     </div>
   );
 };

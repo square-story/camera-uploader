@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import FloatingModeSwitch from "@/components/floating-comp";
+import { GithubButton } from "@/components/ui/github-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
