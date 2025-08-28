@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Upload, X, Image, Check } from 'lucide-react';
+import { Camera, Upload, X, Check, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 
 // Type definitions
 interface FileObject {
@@ -188,7 +189,7 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                                 videoRef.current.play().catch(console.error);
                             }
                         }, 100);
-                    } catch (fallbackError) {
+                    } catch (_fallbackError) {
                         alert('Unable to access camera with any settings.');
                     }
                 } else {
@@ -469,14 +470,16 @@ const CameraUploadComponent: React.FC<CameraUploadComponentProps> = ({
                                     {/* File Preview */}
                                     <div className="flex-shrink-0">
                                         {fileObj.type.startsWith('image/') ? (
-                                            <img
+                                            <Image
                                                 src={fileObj.preview}
                                                 alt={fileObj.name}
                                                 className="w-12 h-12 object-cover rounded"
+                                                width={48}
+                                                height={48}
                                             />
                                         ) : (
                                             <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                                                <Image className="h-6 w-6 text-muted-foreground" />
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
                                             </div>
                                         )}
                                     </div>
